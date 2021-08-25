@@ -1,0 +1,8 @@
+flask
+flask_wtf
+numpy
+scipy
+moviepy
+pillow
+wtforms
+flask_debugtoolbar
