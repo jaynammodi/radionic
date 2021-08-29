@@ -1,4 +1,3 @@
-from flask.helpers import flash
 from flask.templating import render_template
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, DecimalField
@@ -8,11 +7,12 @@ from wtforms.validators import DataRequired
 from flask import Flask, send_file
 import os
 import numpy
+from pydub import AudioSegment
 from pathlib import Path
 from scipy.io.wavfile import write
 from PIL import Image, ImageFont, ImageDraw
 from datetime import datetime, date
-import moviepy.video.io.ImageSequenceClip
+from moviepy.video import VideoClip
 from moviepy.editor import *
 
 global dict_data_store
@@ -31,7 +31,10 @@ class appForm(FlaskForm):
     rr_code = StringField("RR Code", validators=[DataRequired()])
     wish = StringField("Wish", validators=[DataRequired()])
     photo = FileField("Photo", validators=[FileRequired(), FileAllowed(['jpg', 'png'], 'Images only!')])
-    frequency = DecimalField("Frequency", validators=[DataRequired()], places=2)
+    frequency1 = DecimalField("Frequency1", validators=[DataRequired()], places=2)
+    frequency2 = DecimalField("Frequency2", places=2)
+    frequency3 = DecimalField("Frequency3", places=2)
+    frequency4 = DecimalField("Frequency4", places=2)
     duration = IntegerField("Duration", validators=[DataRequired()])
 
 def processPhoto(photo, msgs):
@@ -56,28 +59,42 @@ def processPhoto(photo, msgs):
     draw.text((W/2, H), msg, align="center", font=textfont, anchor="md")
     new_im.save(os.path.join(os.path.dirname(os.path.abspath(__file__)), "edited", photo))
 
+def generateAudio(frequency_list, duration, outfile):
+    outlist = []
+    sample_rate = 44100
+    count = 0
+    for freq in frequency_list:
+        frequency = int(freq)
+        print(" > Genrating Frequency : ", frequency)
+        samples = ""
+        samples = (numpy.sin(2 * numpy.pi * numpy.arange(sample_rate * duration) * frequency / sample_rate)).astype(numpy.float32)
+        write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", outfile + "_" + str(count) + ".wav"), sample_rate, samples)
+        outlist.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", outfile + "_" + str(count) + ".wav"))
+        count += 1
+        print(outlist)
+
+    sound = AudioSegment.from_file(file=outlist[0], format="wav")
+    for x in range(1, len(outlist)):
+        sound2 = AudioSegment.from_file(file=outlist[x], format="wav")
+        sound = sound.overlay(sound2, position=0)
+
+    sound.export(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", outfile + ".mp3"), format="mp3")
+
+
 
 
 def generateVideo(name, photo, rr, wish, freq, len):
     processPhoto(photo, [name, wish, "RR Code - " + rr, " - Radionic Tone Healing"])
     image_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "edited")
-    fps = 1/60
     filename = Path(photo).stem
-    sample_rate = 44100
     duration = len * 60
-    frequency = int(freq)
-    imgseq = []
-    for x in range(len):
-        imgseq.append(os.path.join(image_folder, photo))
+    generateAudio(freq, duration, filename)
 
-    samples = (numpy.sin(2 * numpy.pi * numpy.arange(sample_rate * duration) * frequency / sample_rate)).astype(numpy.float32)
-    write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", filename + ".wav"), sample_rate, samples)
+    audioclip = AudioFileClip(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", filename + ".mp3"))
 
-    audioclip = AudioFileClip(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", filename + ".wav"))
-
-    clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(imgseq, fps=fps)
+    clip = ImageClip(os.path.join(image_folder, photo)).set_duration(audioclip.duration)
     clip = clip.set_audio(audioclip)
-    clip.write_videofile(os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", filename + ".mp4"))
+    clip.write_videofile(os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", filename + ".mp4"), fps=1)
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", filename + ".mp4")
 
 
@@ -98,9 +115,9 @@ def index():
         p = form.photo.data
         photoname = datetime.now().strftime("%d%m%Y%H%M%S") + Path(p.filename).suffix
         p.save(os.path.join(upload_dir, photoname))
-        dict_data_store = [form.name.data, photoname, form.rr_code.data, form.wish.data, form.frequency.data, form.duration.data]
+        freq_list = [form.frequency1.data, form.frequency2.data, form.frequency3.data, form.frequency4.data]
 
-        video_op = generateVideo(form.name.data, photoname, form.rr_code.data, form.wish.data, form.frequency.data, form.duration.data)
+        video_op = generateVideo(form.name.data, photoname, form.rr_code.data, form.wish.data, freq_list, form.duration.data)
 
         return send_file(video_op, as_attachment=True)
 

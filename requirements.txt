@@ -6,3 +6,4 @@ moviepy
 pillow
 wtforms
 flask_debugtoolbar
+pydub
