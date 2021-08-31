@@ -65,7 +65,7 @@ def generateAudio(frequency_list, duration, outfile):
     count = 0
     for freq in frequency_list:
         frequency = int(freq)
-        print(" > Genrating Frequency : ", frequency)
+        print(" > Generating Frequency : ", frequency)
         samples = ""
         samples = (numpy.sin(2 * numpy.pi * numpy.arange(sample_rate * duration) * frequency / sample_rate)).astype(numpy.float32)
         write(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", outfile + "_" + str(count) + ".wav"), sample_rate, samples)
@@ -101,7 +101,7 @@ def generateVideo(name, photo, rr, wish, freq, len):
 
 app = Flask("Radionic Tone Healing Script", template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"))
 app.config['SECRET_KEY'] = SECRET_KEY
-app.debug = False
+app.debug = True
 toolbar = DebugToolbarExtension(app)
 
 @app.route('/', methods = ['GET', 'POST'])
@@ -116,6 +116,8 @@ def index():
         photoname = datetime.now().strftime("%d%m%Y%H%M%S") + Path(p.filename).suffix
         p.save(os.path.join(upload_dir, photoname))
         freq_list = [form.frequency1.data, form.frequency2.data, form.frequency3.data, form.frequency4.data]
+
+        freq_list = [x for x in freq_list if x != 0]
 
         video_op = generateVideo(form.name.data, photoname, form.rr_code.data, form.wish.data, freq_list, form.duration.data)
 
