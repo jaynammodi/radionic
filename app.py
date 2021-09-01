@@ -1,9 +1,10 @@
+from email.policy import default
 from flask.templating import render_template
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, DecimalField
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from flask_debugtoolbar import DebugToolbarExtension
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, Optional
 from flask import Flask, send_file
 import os
 import numpy
@@ -32,9 +33,9 @@ class appForm(FlaskForm):
     wish = StringField("Wish", validators=[DataRequired()])
     photo = FileField("Photo", validators=[FileRequired(), FileAllowed(['jpg', 'png'], 'Images only!')])
     frequency1 = DecimalField("Frequency1", validators=[DataRequired()], places=2)
-    frequency2 = DecimalField("Frequency2", places=2)
-    frequency3 = DecimalField("Frequency3", places=2)
-    frequency4 = DecimalField("Frequency4", places=2)
+    frequency2 = DecimalField("Frequency2", places=2, default=0.0, validators=[Optional()])
+    frequency3 = DecimalField("Frequency3", places=2, default=0.0, validators=[Optional()])
+    frequency4 = DecimalField("Frequency4", places=2, default=0.0, validators=[Optional()])
     duration = IntegerField("Duration", validators=[DataRequired()])
 
 def processPhoto(photo, msgs):
@@ -101,7 +102,7 @@ def generateVideo(name, photo, rr, wish, freq, len):
 
 app = Flask("Radionic Tone Healing Script", template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"))
 app.config['SECRET_KEY'] = SECRET_KEY
-app.debug = True
+app.debug = False
 toolbar = DebugToolbarExtension(app)
 
 @app.route('/', methods = ['GET', 'POST'])
@@ -117,7 +118,7 @@ def index():
         p.save(os.path.join(upload_dir, photoname))
         freq_list = [form.frequency1.data, form.frequency2.data, form.frequency3.data, form.frequency4.data]
 
-        freq_list = [x for x in freq_list if x != 0]
+        freq_list = [x for x in freq_list if x is not None]
 
         video_op = generateVideo(form.name.data, photoname, form.rr_code.data, form.wish.data, freq_list, form.duration.data)
 
