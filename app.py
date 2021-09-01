@@ -31,7 +31,7 @@ class appForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     rr_code = StringField("RR Code", validators=[DataRequired()])
     wish = StringField("Wish", validators=[DataRequired()])
-    photo = FileField("Photo", validators=[FileRequired(), FileAllowed(['jpg', 'png'], 'Images only!')])
+    photo = FileField("Photo", validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
     frequency1 = DecimalField("Frequency1", validators=[DataRequired()], places=2)
     frequency2 = DecimalField("Frequency2", places=2, default=0.0, validators=[Optional()])
     frequency3 = DecimalField("Frequency3", places=2, default=0.0, validators=[Optional()])
