@@ -30,9 +30,21 @@
             {% endfor %}
         </div>
         <div class="col-6 form-group">
+            <label>Duration</label>
+            <input type="number" name="duration" placeholder="Duration of Tone in Minutes" class="form-control">
+            {% for error in form.duration.errors %}
+                <small class="text-danger">{{ error }}</small>  
+            {% endfor %}
+        </div>
+        <div class="col-6 form-group">
             <label>Frequency1</label>
             <input type="number" name="frequency1" placeholder="Tone Frequency in Hz" step=".01" class="form-control">
             {% for error in form.frequency1.errors %}
+                <small class="text-danger">{{ error }}</small>  
+            {% endfor %}
+            <label>Volume1</label>
+            <input type="number" name="vol1" placeholder="Volume 0-10" class="form-control">
+            {% for error in form.vol1.errors %}
                 <small class="text-danger">{{ error }}</small>  
             {% endfor %}
         </div>
@@ -42,11 +54,21 @@
             {% for error in form.frequency2.errors %}
                 <small class="text-danger">{{ error }}</small>  
             {% endfor %}
+            <label>Volume2</label>
+            <input type="number" name="vol2" placeholder="Volume 0-10" class="form-control">
+            {% for error in form.vol2.errors %}
+                <small class="text-danger">{{ error }}</small>  
+            {% endfor %}
         </div>
         <div class="col-6 form-group">
             <label>Frequency3</label>
             <input type="number" name="frequency3" placeholder="Tone Frequency in Hz" step=".01" class="form-control">
             {% for error in form.frequency3.errors %}
+                <small class="text-danger">{{ error }}</small>  
+            {% endfor %}
+            <label>Volume3</label>
+            <input type="number" name="vol3" placeholder="Volume 0-10" class="form-control">
+            {% for error in form.vol3.errors %}
                 <small class="text-danger">{{ error }}</small>  
             {% endfor %}
         </div>
@@ -56,11 +78,16 @@
             {% for error in form.frequency4.errors %}
                 <small class="text-danger">{{ error }}</small>  
             {% endfor %}
+            <label>Volume4</label>
+            <input type="number" name="vol4" placeholder="Volume 0-10" class="form-control">
+            {% for error in form.vol4.errors %}
+                <small class="text-danger">{{ error }}</small>  
+            {% endfor %}
         </div>
-        <div class="col-6 form-group">
-            <label>Duration</label>
-            <input type="number" name="duration" placeholder="Duration of Tone in Minutes" class="form-control">
-            {% for error in form.duration.errors %}
+        <div class="col-12 form-group">
+            <label>Audio Clip </label>
+            <input type="file" name="clip" class="form-control-file">
+            {% for error in form.clip.errors %}
                 <small class="text-danger">{{ error }}</small>  
             {% endfor %}
         </div>

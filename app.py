@@ -33,10 +33,16 @@ class appForm(FlaskForm):
     wish = StringField("Wish", validators=[DataRequired()])
     photo = FileField("Photo", validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
     frequency1 = DecimalField("Frequency1", validators=[DataRequired()], places=2)
+    vol1 = IntegerField("Volume1", validators=[Optional()], default=10)
     frequency2 = DecimalField("Frequency2", places=2, default=0.0, validators=[Optional()])
+    vol2 = IntegerField("Volume2", validators=[Optional()], default=10)
     frequency3 = DecimalField("Frequency3", places=2, default=0.0, validators=[Optional()])
+    vol3 = IntegerField("Volume3", validators=[Optional()], default=10)
     frequency4 = DecimalField("Frequency4", places=2, default=0.0, validators=[Optional()])
+    vol4 = IntegerField("Volume4", validators=[Optional()], default=10)
     duration = IntegerField("Duration", validators=[DataRequired()])
+    clip = FileField("Audio Clip", validators=[Optional(), FileAllowed(['mp3', 'wav', 'mp4', 'm4a', 'flac'], 'Audio Files only!')])
+
 
 def processPhoto(photo, msgs):
     old_im = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", photo))
@@ -60,7 +66,7 @@ def processPhoto(photo, msgs):
     draw.text((W/2, H), msg, align="center", font=textfont, anchor="md")
     new_im.save(os.path.join(os.path.dirname(os.path.abspath(__file__)), "edited", photo))
 
-def generateAudio(frequency_list, duration, outfile):
+def generateAudio(frequency_list, vol_list, duration, outfile):
     outlist = []
     sample_rate = 44100
     count = 0
@@ -74,22 +80,43 @@ def generateAudio(frequency_list, duration, outfile):
         count += 1
         print(outlist)
 
-    sound = AudioSegment.from_file(file=outlist[0], format="wav")
+    tmpsound = AudioSegment.from_file(file=outlist[0], format="wav")
+    sound = tmpsound - 2 * (10 - vol_list[0])
+
+
     for x in range(1, len(outlist)):
-        sound2 = AudioSegment.from_file(file=outlist[x], format="wav")
+        tmpsound2 = AudioSegment.from_file(file=outlist[x], format="wav")
+        sound2 = tmpsound2 - 2 * (10 - vol_list[x])
         sound = sound.overlay(sound2, position=0)
 
     sound.export(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", outfile + ".mp3"), format="mp3")
 
 
+def generateAudioWithFile(frequency_list, vol_list, duration, outfile, audio_file):
+    outname = os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", outfile + "_temp")
+    generateAudio(frequency_list, vol_list, duration, outname)
+    outname += ".mp3"
+    overloop = AudioSegment.from_file(file = audio_file)
+    audio = AudioSegment.from_file(file = outname)
+    audio = audio.overlay(overloop, position=0, loop=True)
+    audio.export(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", outfile + ".mp3"), format="mp3")
 
 
-def generateVideo(name, photo, rr, wish, freq, len):
+
+
+
+
+def generateVideo(name, photo, rr, wish, freq, len, vols, audio):
     processPhoto(photo, [name, wish, "RR Code - " + rr, " - Radionic Tone Healing"])
     image_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "edited")
     filename = Path(photo).stem
     duration = len * 60
-    generateAudio(freq, duration, filename)
+
+    if audio is not None:
+        generateAudioWithFile(freq, vols, duration, filename, audio)
+    else:
+        generateAudio(freq, vols, duration, filename)
+
 
     audioclip = AudioFileClip(os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio", filename + ".mp3"))
 
@@ -117,10 +144,12 @@ def index():
         photoname = datetime.now().strftime("%d%m%Y%H%M%S") + Path(p.filename).suffix
         p.save(os.path.join(upload_dir, photoname))
         freq_list = [form.frequency1.data, form.frequency2.data, form.frequency3.data, form.frequency4.data]
+        vol_list = [form.vol1.data, form.vol2.data, form.vol3.data, form.vol4.data]
 
         freq_list = [x for x in freq_list if x is not None]
+        vol_list = [x for x in vol_list if x is not None]
 
-        video_op = generateVideo(form.name.data, photoname, form.rr_code.data, form.wish.data, freq_list, form.duration.data)
+        video_op = generateVideo(form.name.data, photoname, form.rr_code.data, form.wish.data, freq_list, form.duration.data, vol_list, form.clip.data)
 
         return send_file(video_op, as_attachment=True)
 
